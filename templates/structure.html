@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AMI User Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    #chatbox {
+      width: 100%;
+      height: 200px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    #userInput {
+      width: 80%;
+      padding: 8px;
+    }
+    #sendBtn {
+      padding: 8px 12px;
+    }
+  </style>
+</head>
+<body>
+  <h2>2025 AMI</h2>
+  
+  <div id="chatbox"></div>
+  
+  <input type="text" id="userInput" placeholder="메시지를 입력하세요">
+  <button id="sendBtn">보내기</button>
+
+  <script>
+    const chatbox = document.getElementById("chatbox");
+    const input = document.getElementById("userInput");
+    const button = document.getElementById("sendBtn");
+
+    button.addEventListener("click", async () => {
+      const userText = input.value.trim();
+      if (userText === "") return;
+
+      chatbox.innerHTML += `<p><b>나 : </b> ${userText}</p>`;
+
+      const response = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type" : "application/json" },
+        body: JSON.stringify({ text : userText })
+      });
+
+      const botReply = await response.json();
+      chatbox.innerHTML += `<p><b>AMI : </b> ${botReply.reply}</p>`;
+
+      input.value = "";
+      chatbox.scrollTop = chatbox.scrollHeight;
+    });
+  </script>
+</body>
+</html>
