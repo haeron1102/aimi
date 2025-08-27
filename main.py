@@ -28,7 +28,7 @@ def ask():
         return_tensors="pt",
     ).to(model.device)
 
-    outputs = model.generate(**inputs, max_new_tokens=100, eos_token_id=tokenizer.eos_token_id)
+    outputs = model.generate(**inputs, max_new_tokens=50, eos_token_id=tokenizer.eos_token_id)
 
     reply = tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:])
 
