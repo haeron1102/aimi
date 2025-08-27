@@ -79,6 +79,8 @@
       
       input.value = "";
       chatbox.innerHTML += `<p><b>나 : </b> ${userText}</p>`;
+      chatbox.innerHTML += '<p><b>AMI : </b><span id = "amiReply"></span></p>';
+      const amiReplyE1 = document.getElementById("amiReply");
 
       const response = await fetch("/ask", {
         method: "POST",
@@ -86,10 +88,17 @@
         body: JSON.stringify({ text : userText })
       });
 
-      const botReply = await response.json();
-      chatbox.innerHTML += `<p><b>AMI : </b> ${botReply.reply}</p>`;
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let partial = "";
 
-      chatbox.scrollTop = chatbox.scrollHeight;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        partial += decoder.decode(value, { stream : true });
+        amiReplyE1.innerText = partial;
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }
     };
 
     button.addEventListener("click", sendMessage);

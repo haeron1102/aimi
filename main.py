@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify, render_template
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context
+from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
+import threading
 
 model_path = "model/gemma-3-ib-it"
 
@@ -28,11 +29,20 @@ def ask():
         return_tensors="pt",
     ).to(model.device)
 
-    outputs = model.generate(**inputs, max_new_tokens=50, eos_token_id=tokenizer.eos_token_id)
+    streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens = True)
+    
+    def run_model():
+        model.generate(**inputs, streamer=streamer, max_new_tokens=100, eos_token_id=tokenizer.eos_token_id)
 
-    reply = tokenizer.decode(outputs[0][inputs["input_ids"].shape[-1]:])
+    threading.Thread(target=run_model).start()
 
-    return jsonify({"reply":reply})
+    def generate():
+        for token in streamer:
+            yield token
 
+            if tokenizer.eos_token in token:
+                break
+
+    return Response(stream_with_context(generate()), mimetype="text/plain")
 if __name__ == "__main__":
     app.run()
