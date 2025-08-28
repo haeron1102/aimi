@@ -1,11 +1,15 @@
 from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextIteratorStreamer
 import threading
+import torch
 
 model_path = "model/gemma-3-ib-it"
 
 model = AutoModelForCausalLM.from_pretrained(model_path)
 tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+if torch.cuda.is_available():
+    model = model.to("cuda")
 
 app = Flask(__name__)
 
@@ -32,7 +36,7 @@ def ask():
     streamer = TextIteratorStreamer(tokenizer, skip_prompt=True, skip_special_tokens = True)
     
     def run_model():
-        model.generate(**inputs, streamer=streamer, max_new_tokens=100, eos_token_id=tokenizer.eos_token_id)
+        model.generate(**inputs, streamer=streamer, max_new_tokens=30, eos_token_id=tokenizer.eos_token_id)
 
     threading.Thread(target=run_model).start()
 
